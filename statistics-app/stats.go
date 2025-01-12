@@ -1,5 +1,4 @@
 package main
-
 import (
     "encoding/csv"
     "fmt"
@@ -9,43 +8,51 @@ import (
     "os"
     "sort"
     "strconv"
+    "slices"
 )
 
-const stdMin float64 = -10
-const stdMax float64 = 10
-const stdNumberValues = 10
+type DataFile struct {
+    FileName string
+    Len int
+    Minimum float64
+    Maximum float64
+    Mean float64
+    stdDev float64
+}
+type DFslice []DataFile
 
 func main() {
-    var values []float64
     if len(os.Args) == 1 {
-        fmt.Println("Need onde argument with the file path!")
-        fmt.Printf("Generating %v random values from %v to %v (not included).\n\n", stdNumberValues, stdMin, stdMax)
-
-        for i:=0; i<stdNumberValues; i++ {
-            values = append(values, randomFloat(stdMin, stdMax))
-        }
-    } else {
-        file := os.Args[1]
-        var err error
-        values, err = readFile(file)
-        if err!=nil {
-            log.Println("Error reading:", file, err)
-            os.Exit(0)
-        }
+        fmt.Println("Need one or mode file paths!")
+        return
     }
 
-    sort.Float64s(values)
-    nValues := len(values)
+    files := DFslice{}
+    for i:= 1; i<len(os.Args); i++ {
+        file := os.Args[i]
+        currentFile := DataFile{}
+        currentFile.FileName = file
 
-    // Number of values, Min and Max
-    fmt.Println("Number of values:", nValues)
-    fmt.Printf("Min: %.4f\n", values[0])
-    fmt.Printf("Max: %.4f\n", values[nValues-1])
+        values, err := readFile(file)
+        if err != nil {
+            fmt.Println("Error reading:", file, err)
+            os.Exit(0)
+        }
+        currentFile.Len = len(values)
+        currentFile.Minimum = slices.Min(values)
+        currentFile.Maximum = slices.Max(values)
+        meanValue, standardDeviation := stdDev(values)
+        currentFile.Mean = meanValue
+        currentFile.stdDev = standardDeviation
 
-    meanValue, standardDeviation := stdDev(values)
+        files = append(files, currentFile)
+    }
 
-    normalized := normalize(values, meanValue, standardDeviation)
-    fmt.Println("Normalized:", normalized)
+    sort.Sort(files)
+    for _, val := range files {
+        f := val.FileName
+        fmt.Println(f, ":", val.Len, val.Mean, val.Minimum, val.Maximum, val.stdDev)
+    }
 }
 
 func stdDev(x []float64) (float64, float64) {
@@ -110,3 +117,14 @@ func readFile(filePath string) ([]float64, error) {
     }
     return values, nil
 }
+
+func (a DFslice) Len() int {
+    return len(a)
+}
+func (a DFslice) Less(i, j int) bool {
+    return a[i].Mean < a[j].Mean
+}
+func (a DFslice) Swap(i, j int) {
+    a[i], a[j] = a[j], a[i]
+}
+
