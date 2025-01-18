@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"os"
-
+    "encoding/json"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +26,7 @@ to quickly create a Cobra application.`,
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
+var disableLogging bool
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -45,7 +46,43 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+    rootCmd.PersistentFlags().BoolVarP(&disableLogging, "log", "l", false, "Logging information")
+}
+
+func DeSerialize(e *json.Decoder, slice any) error {
+    return e.Decode(slice)
+}
+func Serialize(e *json.Encoder, slice any) error {
+    return e.Encode(slice)
+}
+func saveJSONFile(filePath string) error {
+    f, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+
+    err = Serialize(&data, f)
+    return err
+}
+
+func readJSONFile(filePath string) error {
+    _, err := os.Stat(filePath)
+    if err != nil {
+        return err
+    }
+
+    f, err := os.Open(filePath)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+
+    err = DeSerialize(&data, f)
+    if err != nil {
+        return err
+    }
+    return nil
 }
 
 
