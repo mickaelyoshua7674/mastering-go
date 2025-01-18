@@ -48,7 +48,6 @@ func main() {
         fmt.Print(random(min, max, r), " ")
     }
     fmt.Println()
-
 }
 
 func random(min, max int, r *rand.Rand) int {
