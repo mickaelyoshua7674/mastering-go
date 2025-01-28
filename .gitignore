@@ -1,2 +1,5 @@
+# Dev Container
+.devcontainer/
+
 # VS Code
 .vscode/
